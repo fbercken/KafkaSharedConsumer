@@ -1,4 +1,4 @@
-package com.sharedconsumer;
+package com.sharedConsumer;
 
 import java.util.List;
 import java.util.Map;
@@ -34,7 +34,13 @@ public class OffsetManager extends ConcurrentHashMap<TopicPartition,List<Long>> 
 	}
 	
 	
-	public static void moveOffset(List<Long> offsets, long offset) {
+	public Set<TopicPartition> GetTopicPartitions() {
+
+		return new HashSet<>(Collections.list(this.keys()));
+	}
+	
+	
+	private static void moveOffset(List<Long> offsets, long offset) {
 		
 		for( int i=offsets.size() -1; i >=0; i--) {
 			if ( offsets.get(i) <= offset ) offsets.remove(i);
@@ -42,7 +48,7 @@ public class OffsetManager extends ConcurrentHashMap<TopicPartition,List<Long>> 
 	}
 	
 	
-	public static Long getNewOffset( List<Long> offsets, Long previousOffset) {
+	private static Long getNewOffset( List<Long> offsets, Long previousOffset) {
 		
 		Long[] arr = offsets.toArray(new Long[offsets.size()]);
 		Arrays.sort(arr);
@@ -59,12 +65,6 @@ public class OffsetManager extends ConcurrentHashMap<TopicPartition,List<Long>> 
 	}
 	
 	
-	public Set<TopicPartition> GetTopicPartitions() {
-
-		return new HashSet<>(Collections.list(this.keys()));
-	}
-	
-	
 	public Map<TopicPartition,OffsetAndMetadata> newOffsets(Map<TopicPartition,OffsetAndMetadata> oldOffsets) {
 		
 		Map<TopicPartition, OffsetAndMetadata> newOffsets = new HashMap<>();
@@ -74,12 +74,10 @@ public class OffsetManager extends ConcurrentHashMap<TopicPartition,List<Long>> 
 			List<Long> offsets = this.get(k);
 			Long newOffset = OffsetManager.getNewOffset( offsets, oldOffset);
 			if ( oldOffset < newOffset) newOffsets.put( k, new OffsetAndMetadata(newOffset));			
-			logger.info("Before: {}  Patition: {} - {}", newOffsets, k, v);
+			logger.info("Before: {}  Partition: {} - {}", newOffsets, k, v);
 		});		
 		return newOffsets;
 	}
-	
-	
 	
 	
 	public void moveOffsets(Map<TopicPartition,OffsetAndMetadata> offsets) {
@@ -90,8 +88,13 @@ public class OffsetManager extends ConcurrentHashMap<TopicPartition,List<Long>> 
 			for(int i= list.size() -1 ; i>=0; i--) {
 				if ( list.get(i) <= newOffset) list.remove(i);
 			}
-			logger.info("After: {} Patition: {} - {}", newOffset, k, list);
+			logger.info("After: {} Partition: {} - {}", newOffset, k, list);
 		});	
+	}
+	
+	
+	public void close() {
+		
 	}
 	 
 
